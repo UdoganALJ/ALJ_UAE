@@ -1,0 +1,39 @@
+{
+  "id": "7ed5215a-6ed5-4192-9947-43bdc57602d1",
+  "name": "ALJ Extension - UAE",
+  "publisher": "Abdul Latif Jameel Company",
+  "version": "25.0.8.2",
+   "brief": "This app contains global customized functionalities in addition to base application and dealerbox extension specialized for UAE environment",
+  "description": "This app contains global customized functionalities in addition to base application and dealerbox extension, specialized for UAE environment",
+  "privacyStatement": "",
+  "EULA": "",
+  "help": "",
+  "url": "",
+  "logo": "",
+  "dependencies": [
+     {
+    "id": "18ee8d2c-6199-4360-a01d-c6e275d6c242",
+    "name": "DealerBox Automotive Dealership and Importer Management System",
+    "publisher": "Intelligent Systems",
+    "version": "23.12.650.0"
+  }
+  ],
+  "screenshots": [],
+  "platform": "1.0.0.0",
+  "application": "26.0.0.0",
+  "idRanges": [
+    {
+      "from": 63200,
+      "to": 63399
+    }
+  ],
+  "resourceExposurePolicy": {
+    "allowDebugging": true,
+    "allowDownloadingSource": false,
+    "includeSourceInSymbolFile": false
+  },
+  "runtime": "15.0",
+  "features": [
+    "NoImplicitWith"
+  ]
+}

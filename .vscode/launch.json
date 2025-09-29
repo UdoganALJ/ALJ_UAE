@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "ALJ UAE Sandbox",
+            "request": "launch",
+            "tenant": "de46eb3d-0709-4276-a454-bdc8ac301332",
+            "type": "al",
+            "environmentType": "Sandbox",
+            "environmentName": "UAE_TEST",
+            "startupObjectId": 22,
+            "startupObjectType": "Page",
+            "breakOnError": "All",
+            "launchBrowser": true,
+            "enableLongRunningSqlStatements": true,
+            "enableSqlInformationDebugger": true,
+            "schemaUpdateMode": "ForceSync",
+            "startupCompany": "Jameel Vehicles Trading FZE"
+        },
+    ]
+}
