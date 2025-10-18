@@ -46,11 +46,11 @@ table 63200 ALJTab_VehicleStockMgt_UAE
             DataClassification = CustomerContent;
             Caption = 'Arrival Date';
         }
-        field(8; "Delivery Status OEM"; Option)
+        field(8; "Delivery Status OEM"; Text[50])
         {
             DataClassification = CustomerContent;
             Caption = 'Delivery Status OEM';
-            OptionMembers = Arrived,Placed;
+
         }
         field(9; "Model Year"; Code[20])
         {
@@ -133,7 +133,7 @@ table 63200 ALJTab_VehicleStockMgt_UAE
     var
         lVehicle: Record "DBV Vehicle";
     begin
-        lVehicle.SetAutoCalcFields("Customer Name");
+        lVehicle.SetAutoCalcFields("Customer Name", "Vehicle Status (Cust) Descr.", "Vehicle Status (Log) Descr.");
         lVehicle.SetLoadFields(VIN, Description, "Color Description Real", "Acceptance Date", "Model Year", "Vehicle Status (Cust) Descr.", "Vehicle Location", "Customer Name", "Test Drive Vehicle", "Dealer Delivery Date");
         lVehicle.ReadIsolation := IsolationLevel::ReadUncommitted;
         lVehicle.Get(Rec."Vehicle No.");
@@ -143,10 +143,12 @@ table 63200 ALJTab_VehicleStockMgt_UAE
         Rec.Validate("Arrival Date", lVehicle."Acceptance Date");
         Rec.Validate("Model Year", lVehicle."Model Year");
         Rec.Validate("Stock Status", lVehicle."Vehicle Status (Cust) Descr.");
+        Rec.Validate("Delivery Status OEM", lVehicle."Vehicle Status (Log) Descr.");
         Rec.Validate("Vehicle Location", lVehicle."Vehicle Location");
         Rec.Validate("Customer Name", lVehicle."Customer Name");
         Rec.Validate("Is Demo Vehicle", lVehicle."Test Drive Vehicle");
         Rec.Validate("Date of Sales", lVehicle."Dealer Delivery Date");
+
     end;
 
     internal procedure CalcStockMgt()

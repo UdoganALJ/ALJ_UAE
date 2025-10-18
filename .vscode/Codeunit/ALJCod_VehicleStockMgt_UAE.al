@@ -24,32 +24,37 @@ codeunit 63202 ALJCod_VehicleStockMgt_UAE
             repeat
                 lStockMgt.Init();
                 lStockMgt.Validate("Vehicle No.", lVehicle."No.");//Validates all other vehicle fields on table level
-                GetVehiclePO(lVehicle, lVehiclePO);
-                lStockMgt.Validate("PO Number", lVehiclePO."No.");
-                lStockMgt.Validate("PO Date", lVehiclePO."Order Date");
                 GetVehiclePurchValueEntries(lVehicle."No.", lValueEntry);
-                lStockMgt.Validate("Unit Cost", GetVehicleCostsFromValueEntries(1, lValueEntry));
-                lStockMgt.Validate("Freight Price", GetVehicleCostsFromValueEntries(2, lValueEntry));
-                lStockMgt.Validate("CFR Price", GetVehicleCostsFromValueEntries(3, lValueEntry));
+                GetVehiclePO(lVehicle, lStockMgt);
+                lStockMgt.Validate("Unit Cost", GetVehicleCostsFromValueEntries(0, lValueEntry, lVehicle."No."));
+                lStockMgt.Validate("Freight Price", GetVehicleCostsFromValueEntries(1, lValueEntry, lVehicle."No."));
+                lStockMgt.Validate("CFR Price", GetVehicleCostsFromValueEntries(2, lValueEntry, lVehicle."No."));
+                lStockMgt.Validate("Arrival Date", lVehicle."Acceptance Date");
                 CalculateVehicleStockAge(lVehicle, lStockAgeDays, lStockAgeMonths);
                 lStockMgt.Validate("Stock Age Days", lStockAgeDays);
                 lStockMgt.Validate("Stock Age Months", lStockAgeMonths);
                 lStockMgt.Insert();
             until lVehicle.Next() = 0;
+
         end;
     end;
 
-    local procedure GetVehiclePO(pVehicle: Record "DBV Vehicle"; pVehiclePO: Record "Purchase Header")
+    local procedure GetVehiclePO(pVehicle: Record "DBV Vehicle"; var pStockMgt: Record ALJTAB_VehicleStockMgt_UAE)
     var
-        lPurchLine: Record "Purchase Line";
+        lDvbVehLedEnt: Record "DBV Vehicle Ledger Entry";
+        lCompSet: Record "DBV Company Setup";
     begin
-        lPurchLine.SetRange("Document Type", lPurchLine."Document Type"::Order);
-        lPurchLine.SetRange("DBV Vehicle No.", pVehicle."No.");
-        lPurchLine.SetLoadFields("Document Type", "Document No.", "DBV Vehicle No.", "Quantity Received");
-        lPurchLine.ReadIsolation := IsolationLevel::ReadUncommitted;
-        if lPurchLine.FindLast() then begin
-            pVehiclePO := lPurchLine.GetPurchHeader();
+        lCompSet.Get(CompanyName);
+        lDvbVehLedEnt.SetRange("Company Code", lCompSet.Code);
+        lDvbVehLedEnt.SetRange("Vehicle No.", pVehicle."No.");
+        lDvbVehLedEnt.SetRange("Source Type", lDvbVehLedEnt."Source Type"::Inventory);
+        lDvbVehLedEnt.SetRange("Entry Type", lDvbVehLedEnt."Entry Type"::Purchase);
+        lDvbVehLedEnt.ReadIsolation := IsolationLevel::ReadCommitted;
+        if lDvbVehLedEnt.FindLast() then begin
+            pStockMgt."PO Number" := lDvbVehLedEnt."Document No.";
+            pStockMgt."PO Date" := lDvbVehLedEnt."Document Date";
         end;
+
     end;
 
 
@@ -68,42 +73,43 @@ codeunit 63202 ALJCod_VehicleStockMgt_UAE
         end;
     end;
 
-    local procedure GetVehicleCostsFromValueEntries(pCalculatingVal: Option Initial,Freight,Cfr; var pValueEntry: Record "Value Entry"): Decimal
+    local procedure GetVehicleCostsFromValueEntries(pCalculatingVal: Option Initial,Freight,Cfr; var pValueEntry: Record "Value Entry"; pVehNo: Code[20]): Decimal
     var
         lCostOut: Decimal;
     begin
-        if pValueEntry.FindSet() then begin
-            pValueEntry.SetRange("Item Ledger Entry Type", pValueEntry."Item Ledger Entry Type"::Purchase);
-            pValueEntry.SetRange("Entry Type", pValueEntry."Entry Type"::"Direct Cost");
-            case pCalculatingVal of
-                pCalculatingVal::Initial:
-                    begin
-                        pValueEntry.SetRange("Item Charge No.", '');
-                        pValueEntry.SetRange("Invoiced Quantity", 1);
-                        if pValueEntry.FindLast() then
-                            lCostOut := pValueEntry."Cost per Unit (ACY)";
+        pValueEntry.Reset();
+        pValueEntry.SetRange("DBV Vehicle No.", pVehNo);
+        pValueEntry.SetRange("Item Ledger Entry Type", pValueEntry."Item Ledger Entry Type"::Purchase);
+        pValueEntry.SetRange("Entry Type", pValueEntry."Entry Type"::"Direct Cost");
+        case pCalculatingVal of
+            pCalculatingVal::Initial:
+                begin
+                    pValueEntry.SetRange("Item Charge No.", '');
+                    pValueEntry.SetRange("Invoiced Quantity", 1);
+                    if pValueEntry.FindLast() then
+                        lCostOut := pValueEntry."Cost per Unit (ACY)";
+                end;
+            pCalculatingVal::Freight:
+                begin
+                    pValueEntry.SetRange("Item Charge No.", 'FREIGHT-NV');
+                    pValueEntry.SetRange("Valued Quantity", 1);
+                    if pValueEntry.FindLast() then
+                        lCostOut := pValueEntry."Cost per Unit (ACY)";
+                end;
+            pCalculatingVal::Cfr:
+                begin
+                    if pValueEntry.FindSet() then begin
+                        pValueEntry.CalcSums("Cost per Unit (ACY)");
+                        lCostOut := pValueEntry."Cost per Unit (ACY)";
+
                     end;
-                pCalculatingVal::Freight:
-                    begin
-                        pValueEntry.SetRange("Item Charge No.", 'FREIGHT-NV');
-                        pValueEntry.SetRange("Valued Quantity", 1);
-                        if pValueEntry.FindLast() then
-                            lCostOut := pValueEntry."Cost per Unit (ACY)";
-                    end;
-                pCalculatingVal::Cfr:
-                    begin
-                        if pValueEntry.FindSet() then begin
-                            pValueEntry.CalcSums("Cost per Unit (ACY)");
-                            lCostOut := pValueEntry."Cost per Unit (ACY)";
-                        end;
-                    end;
-            end;
+                end;
         end;
         exit(lCostOut);
 
     end;
 
-    local procedure CalculateVehicleStockAge(pVehicle: Record "DBV Vehicle"; pNoOfDays: Integer; pNoOfMonths: Integer)
+    local procedure CalculateVehicleStockAge(pVehicle: Record "DBV Vehicle"; var pNoOfDays: Integer; var pNoOfMonths: Integer)
     begin
         if pVehicle."Acceptance Date" <> 0D then begin
             pNoOfMonths := CalcFullMonthsBetweenDates(pVehicle."Acceptance Date", Today);
