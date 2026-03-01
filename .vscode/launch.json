@@ -33,5 +33,15 @@
             "schemaUpdateMode": "ForceSync",
             "startupCompany": "Jameel Vehicles Trading FZE"
         },
+         {
+            "name": "ALJ UAE Snapshot",
+            "type": "al",
+            "request": "snapshotInitialize",
+            "environmentType": "Production",
+            "environmentName": "UAE_PROD",
+            "breakOnNext": "WebClient",
+            "executionContext": "DebugAndProfile",
+             "tenant": "de46eb3d-0709-4276-a454-bdc8ac301332",  
+        }
     ]
 }

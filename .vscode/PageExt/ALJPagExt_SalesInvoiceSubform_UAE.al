@@ -1,4 +1,4 @@
-pageextension 63200 ALJPagExt_SalesInvSubform_UAE extends "Posted Sales Invoice Subform"
+pageextension 63201 ALJPagExt_SalesInvSubform_UAE extends "Posted Sales Invoice Subform"
 {
     actions
     {
